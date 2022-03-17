@@ -1,9 +1,10 @@
-﻿using System.Reflection;
+﻿using System.Collections.Generic;
+using System.Reflection;
 
 namespace VRCFT_Module___LiveLink
 {
     // Live Link Single-Eye tracking data
-    public struct LiveLinkTrackingDataEye
+    public class LiveLinkTrackingDataEye
     {
         public float EyeBlink;
         public float EyeLookDown;
@@ -18,7 +19,7 @@ namespace VRCFT_Module___LiveLink
     }
 
     // Live Link lip tracking data
-    public struct LiveLinkTrackingDataLips
+    public class LiveLinkTrackingDataLips
     {
         public float JawForward;
         public float JawLeft;
@@ -56,7 +57,7 @@ namespace VRCFT_Module___LiveLink
     }
 
     // Live Link brow tracking data
-    public struct LiveLinkTrackingDataBrow
+    public class LiveLinkTrackingDataBrow
     {
         public float BrowDownLeft;
         public float BrowDownRight;
@@ -66,12 +67,12 @@ namespace VRCFT_Module___LiveLink
     }
 
     // All Live Link tracking data
-    public struct LiveLinkTrackingDataStruct
+    public class LiveLinkTrackingDataStruct
     {
-        public LiveLinkTrackingDataEye left_eye;
-        public LiveLinkTrackingDataEye right_eye;
-        public LiveLinkTrackingDataLips lips;
-        public LiveLinkTrackingDataBrow brow;
+        public LiveLinkTrackingDataEye left_eye = new LiveLinkTrackingDataEye();
+        public LiveLinkTrackingDataEye right_eye = new LiveLinkTrackingDataEye();
+        public LiveLinkTrackingDataLips lips = new LiveLinkTrackingDataLips();
+        public LiveLinkTrackingDataBrow brow = new LiveLinkTrackingDataBrow();
 
         public LiveLinkTrackingDataEye getCombined()
         {
@@ -85,6 +86,31 @@ namespace VRCFT_Module___LiveLink
                 combined = (LiveLinkTrackingDataEye)temp;
             }
             return combined;
+        }
+        
+        public void ProcessData(Dictionary<string, float> values)
+        {
+            // For each of the eye tracking blendshapes
+            foreach (var field in typeof(LiveLinkTrackingDataEye).GetFields())
+            {
+                string leftName = field.Name + "Left";
+                string rightName = field.Name + "Right";
+
+                field.SetValue(left_eye, values[leftName]);
+                field.SetValue(right_eye, values[rightName]);
+            }
+
+            // For each of the lip tracking blendshapes
+            foreach (var field in typeof(LiveLinkTrackingDataLips).GetFields())
+            {
+                field.SetValue(lips, values[field.Name]);
+            }
+
+            // For each of the brow tracking blendshapes
+            foreach (var field in typeof(LiveLinkTrackingDataBrow).GetFields())
+            {
+                field.SetValue(brow, values[field.Name]);
+            }
         }
     }
 
