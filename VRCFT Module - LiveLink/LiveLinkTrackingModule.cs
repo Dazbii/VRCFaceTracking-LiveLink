@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Threading;
 using ViveSR.anipal.Lip;
 using VRCFaceTracking;
@@ -15,16 +14,10 @@ namespace VRCFT_Module___LiveLink
     public static class TrackingData
     {
         // Map the EyeBlink and EyeSquint LiveLink blendshapes to the openness SRanipal blendshape
-        private static float eyeCalc(float eyeBlink, float eyeSquint)
-        {
-            return (float)Math.Pow(0.05 + eyeBlink, 6) + eyeSquint;
-        }
+        private static float eyeCalc(float eyeBlink, float eyeSquint) => (float)Math.Pow(0.05 + eyeBlink, 6) + eyeSquint;
 
         // Map the JawOpen and MouthClose LiveLink blendshapes to the apeShape SRanipal blendshape
-        private static float apeCalc(float jawOpen, float mouthClose)
-        {
-            return (0.05f + jawOpen) * (float)Math.Pow(0.05 + mouthClose, 2);
-        }
+        private static float apeCalc(float jawOpen, float mouthClose) => (0.05f + jawOpen) * (float)Math.Pow(0.05 + mouthClose, 2);
 
         // Map the LiveLink module's single-eye data to the SRanipal API
         private static void Update(ref Eye data, LiveLinkTrackingDataEye external)
@@ -99,22 +92,28 @@ namespace VRCFT_Module___LiveLink
             Update(ref UnifiedTrackingData.LatestLipShapes, external.lips);
         }
     }
+
     public class LiveLinkTrackingModule : ITrackingModule
     {
         private static CancellationTokenSource _cancellationToken;
 
-        public UdpClient liveLinkConnection;
-        public IPEndPoint liveLinkRemoteEndpoint;
+        private UdpClient _liveLinkConnection;
+        private IPEndPoint _liveLinkRemoteEndpoint;
+        private LiveLinkTrackingDataStruct _latestData;
 
         // Starts listening and waits for the first packet to come in to initialize
         public (bool eyeSuccess, bool lipSuccess) Initialize(bool eye, bool lip)
         {
             Logger.Msg("Initializing Live Link Tracking module");
+            
             _cancellationToken?.Cancel();
             UnifiedTrackingData.LatestEyeData.SupportsImage = false;
-            liveLinkConnection = new UdpClient(Constants.Port);
-            liveLinkRemoteEndpoint = new IPEndPoint(IPAddress.Any, 0);
-            ReadData(liveLinkConnection, liveLinkRemoteEndpoint);
+            
+            _liveLinkConnection = new UdpClient(Constants.Port);
+            _liveLinkRemoteEndpoint = new IPEndPoint(IPAddress.Any, 0);
+            _latestData = new LiveLinkTrackingDataStruct();
+            
+            ReadData(_liveLinkConnection, _liveLinkRemoteEndpoint, ref _latestData);
             return (true, true);
         }
 
@@ -136,11 +135,8 @@ namespace VRCFT_Module___LiveLink
         // Currently doing all data processing in this Update function, should probably move into TrackingData
         public void Update()
         {
-            LiveLinkTrackingDataStruct? newData = ReadData(liveLinkConnection, liveLinkRemoteEndpoint);
-            if (newData is LiveLinkTrackingDataStruct d)
-                {
-                TrackingData.Update(d);
-            }
+            ReadData(_liveLinkConnection, _liveLinkRemoteEndpoint, ref _latestData);
+            TrackingData.Update(_latestData);   // Worse case we have bad data from LiveLink, we just update with the same values
         }
 
         // A chance to de-initialize everything. This runs synchronously inside main game thread. Do not touch any Unity objects here.
@@ -148,7 +144,7 @@ namespace VRCFT_Module___LiveLink
         {
             _cancellationToken.Cancel();
             _cancellationToken.Dispose();
-            liveLinkConnection.Close();
+            _liveLinkConnection.Close();
             Logger.Msg("LiveLink Teardown");
         }
 
@@ -156,7 +152,7 @@ namespace VRCFT_Module___LiveLink
         public bool SupportsLip => true;
 
         // Read the data from the LiveLink UDP stream and place it into a LiveLinkTrackingDataStruct
-        private LiveLinkTrackingDataStruct? ReadData(UdpClient liveLinkConnection, IPEndPoint liveLinkRemoteEndpoint)
+        private void ReadData(UdpClient liveLinkConnection, IPEndPoint liveLinkRemoteEndpoint, ref LiveLinkTrackingDataStruct trackingData)
         {
             Dictionary<string, float> values = new Dictionary<string, float>();
 
@@ -193,56 +189,10 @@ namespace VRCFT_Module___LiveLink
             // Check that we got all 61 values before we go processing things
             if (values.Count() != 61)
             {
-                return null;
+                return;
             }
-            return ProcessData(values);
-        }
-
-        // This is all terrible, I am almost certain that there is no need to use relfection for any of this
-        private LiveLinkTrackingDataStruct ProcessData(Dictionary<string, float> values)
-        {
-            LiveLinkTrackingDataStruct processedData = new LiveLinkTrackingDataStruct();
-
-            // For each of the eye tracking blendshapes
-            foreach (var field in typeof(LiveLinkTrackingDataEye).GetFields(BindingFlags.Instance |
-                                                                            BindingFlags.NonPublic |
-                                                                            BindingFlags.Public))
-            {
-                string leftName = field.Name + "Left";
-                string rightName = field.Name + "Right";
-
-                // Values have to be boxed before they're set otherwise it won't actually get written
-                object tempLeft = processedData.left_eye;
-                object tempRight = processedData.right_eye;
-                field.SetValue(tempLeft, values[leftName]);
-                field.SetValue(tempRight, values[rightName]);
-                processedData.left_eye = (LiveLinkTrackingDataEye)tempLeft;
-                processedData.right_eye = (LiveLinkTrackingDataEye)tempRight;
-            }
-
-            // For each of the lip tracking blendshapes
-            foreach (var field in typeof(LiveLinkTrackingDataLips).GetFields(BindingFlags.Instance |
-                                                                            BindingFlags.NonPublic |
-                                                                            BindingFlags.Public))
-            {
-                // Box them and set them
-                object temp = processedData.lips;
-                field.SetValue(temp, values[field.Name]);
-                processedData.lips = (LiveLinkTrackingDataLips)temp;
-            }
-
-            // For each of the brow tracking blendshapes
-            foreach (var field in typeof(LiveLinkTrackingDataBrow).GetFields(BindingFlags.Instance |
-                                                                BindingFlags.NonPublic |
-                                                                BindingFlags.Public))
-            {
-                // Box them and set them
-                object temp = processedData.brow;
-                field.SetValue(processedData.brow, values[field.Name]);
-                processedData.brow = (LiveLinkTrackingDataBrow)temp;
-            }
-
-            return processedData;
+            
+            trackingData.ProcessData(values);
         }
     }
 }
