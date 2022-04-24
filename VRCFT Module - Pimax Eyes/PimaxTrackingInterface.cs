@@ -11,7 +11,7 @@ namespace VRCFT_Module___Pimax_Eye_Tracking
         private static readonly CancellationTokenSource CancellationToken = new CancellationTokenSource();
         
         private static bool _needsUpdate;
-        
+
         public bool SupportsEye => true;
         public bool SupportsLip => false;
 
@@ -48,13 +48,13 @@ namespace VRCFT_Module___Pimax_Eye_Tracking
             if (!UnifiedLibManager.EyeEnabled) return;
             
             PimaxEyeData.Update();
-            //UnifiedTrackingData.LatestEyeData.UpdateData(PimaxEyeData);
-            UnifiedTrackingData.LatestEyeData.Left.Look = new Vector2((PimaxEyeData.Left.PupilCenterX * 2 - 1)*2, (PimaxEyeData.Left.PupilCenterY * 2 - 1)*2);
-            UnifiedTrackingData.LatestEyeData.Right.Look = new Vector2((PimaxEyeData.Right.PupilCenterX * 2 - 1)*2, (PimaxEyeData.Right.PupilCenterY * 2 - 1)*2);
-            UnifiedTrackingData.LatestEyeData.Combined.Look = new Vector2((PimaxEyeData.Recommended.PupilCenterX * 2 - 1)*2, (PimaxEyeData.Recommended.PupilCenterY * 2 - 1)*2);
-            UnifiedTrackingData.LatestEyeData.Left.Openness = 1f; //PimaxEyeData.Left.Openness * 0.01f;
-            UnifiedTrackingData.LatestEyeData.Right.Openness = 1f; //PimaxEyeData.Right.Openness * 0.01f;
-            UnifiedTrackingData.LatestEyeData.Combined.Openness = 1f; // PimaxEyeData.Recommended.Openness * 0.01f;
+
+            UnifiedTrackingData.LatestEyeData.Left.Look = PimaxEyeData.Left.PupilCenter;
+            UnifiedTrackingData.LatestEyeData.Right.Look = PimaxEyeData.Right.PupilCenter;
+            UnifiedTrackingData.LatestEyeData.Combined.Look = PimaxEyeData.Recommended.PupilCenter;
+            UnifiedTrackingData.LatestEyeData.Left.Openness = PimaxEyeData.Left.Openness;
+            UnifiedTrackingData.LatestEyeData.Right.Openness = PimaxEyeData.Right.Openness;
+            UnifiedTrackingData.LatestEyeData.Combined.Openness = PimaxEyeData.Recommended.Openness;
         }
     }
 }
