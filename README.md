@@ -28,15 +28,10 @@ You need an IPhone X/XS/XR or newer, 12.9-inch IPad Pro 3rd gen or newer, or 11-
 ## 🔍 Troubleshooting
 
 - Double check to make sure that your apple device and computer are connected to the same network
-- Double check the IP address and port number entered in LiveLink match your computer's local IP address and that the port matches the one specified in the `UserData/MelonPreferences.cfg` file.
+- Double check the IP address and port number entered in LiveLink match your computer's local IP address and that the port is either left blank or set to `11111`
 - Check that the IP address enetered is the local IP for the shared network, and not for any other networks your computer may be connected to (e.g. Hamachi)
 - Ensure that your avatar supports VRCFT, and check in the toggles to make sure it is enabled
 - Check your windows network settings, and ensure that the network is set as a private network
-
-## 📜 Disclaimer
-
-As with all VRChat mods, modifying the game client can result in account termination, be it temporary or permanent. While this mod doesn't ruin the experience for others, using it may still be a bannable offence.<br>
-**USE AT YOUR OWN RISK**. I will not be held responsible for any punishments you may recieve for using this mod.
 
 ## 🧰 Other Useful Tools:
 
