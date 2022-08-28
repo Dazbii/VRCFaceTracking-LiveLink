@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VRCFaceTracking", "VRCFaceT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VRCFT Module Example", "VRCFT Module Example\VRCFT Module Example.csproj", "{296110E5-3AE7-4D9F-BE09-890194CDD76E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VRCFT Module - LiveLink", "VRCFT Module - LiveLink\VRCFT Module - LiveLink.csproj", "{7BE1F20E-ED6E-4B30-93CC-E39DF9D86C7D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{296110E5-3AE7-4D9F-BE09-890194CDD76E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{296110E5-3AE7-4D9F-BE09-890194CDD76E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{296110E5-3AE7-4D9F-BE09-890194CDD76E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BE1F20E-ED6E-4B30-93CC-E39DF9D86C7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BE1F20E-ED6E-4B30-93CC-E39DF9D86C7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BE1F20E-ED6E-4B30-93CC-E39DF9D86C7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BE1F20E-ED6E-4B30-93CC-E39DF9D86C7D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

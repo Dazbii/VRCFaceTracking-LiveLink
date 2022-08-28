@@ -28,9 +28,9 @@ namespace VRCFT_Module___LiveLink
         }
 
         // Map the LiveLink module's lip tracking data to the SRanipal API
-        private static void Update(ref Dictionary<LipShape_v2, float> data,  LiveLinkTrackingDataLips external)
+        private static void Update(ref LipTrackingData data,  LiveLinkTrackingDataLips external)
         {
-            if (!UnifiedLibManager.LipEnabled) return;
+            //if (!UnifiedLibManager.LipEnabled) return;
 
             Dictionary<LipShape_v2, float> lipShapes = new Dictionary<LipShape_v2, float>{
                     { LipShape_v2.JawRight, external.JawRight }, // +JawX
@@ -72,13 +72,16 @@ namespace VRCFT_Module___LiveLink
                     { LipShape_v2.TongueDownRightMorph, 0 },
                 };
 
-            data = lipShapes;
+            for (int i = 0; i < SRanipal_Lip_v2.WeightingCount; i++)
+            {
+                data.LatestShapes[i] = lipShapes.Values.ElementAt(i);
+            }
         }
 
         // Map the LiveLink module's eye data to the SRanipal API
         private static void Update(ref EyeTrackingData data, LiveLinkTrackingDataStruct external)
         {
-            if (!UnifiedLibManager.EyeEnabled) return;
+            //if (!UnifiedLibManager.EyeEnabled) return;
 
             Update(ref data.Right, external.right_eye);
             Update(ref data.Left, external.left_eye);
@@ -89,12 +92,14 @@ namespace VRCFT_Module___LiveLink
         public static void Update(LiveLinkTrackingDataStruct external)
         {
             Update(ref UnifiedTrackingData.LatestEyeData, external);
-            Update(ref UnifiedTrackingData.LatestLipShapes, external.lips);
+            Update(ref UnifiedTrackingData.LatestLipData, external.lips);
         }
     }
 
-    public class LiveLinkTrackingModule : ITrackingModule
+    public class LiveLinkTrackingModule : ExtTrackingModule
     {
+        public override (bool SupportsEye, bool SupportsLip) Supported => (true, true);
+
         private static CancellationTokenSource _cancellationToken;
 
         private UdpClient _liveLinkConnection;
@@ -102,12 +107,13 @@ namespace VRCFT_Module___LiveLink
         private LiveLinkTrackingDataStruct _latestData;
 
         // Starts listening and waits for the first packet to come in to initialize
-        public (bool eyeSuccess, bool lipSuccess) Initialize(bool eye, bool lip)
+        public override (bool eyeSuccess, bool lipSuccess) Initialize(bool eye, bool lip)
         {
             Logger.Msg("Initializing Live Link Tracking module");
             
             _cancellationToken?.Cancel();
             UnifiedTrackingData.LatestEyeData.SupportsImage = false;
+            UnifiedTrackingData.LatestLipData.SupportsImage = false;
             
             _liveLinkConnection = new UdpClient(Constants.Port);
             _liveLinkRemoteEndpoint = new IPEndPoint(IPAddress.Any, 0);
@@ -118,7 +124,7 @@ namespace VRCFT_Module___LiveLink
         }
 
         // Update the face pose every 10ms, this is the same frequency that Pimax and SRanipal use
-        public Action GetUpdateThreadFunc()
+        public override Action GetUpdateThreadFunc()
         {
             _cancellationToken = new CancellationTokenSource();
             return () =>
@@ -140,16 +146,13 @@ namespace VRCFT_Module___LiveLink
         }
 
         // A chance to de-initialize everything. This runs synchronously inside main game thread. Do not touch any Unity objects here.
-        public void Teardown()
+        public override void Teardown()
         {
             _cancellationToken.Cancel();
             _cancellationToken.Dispose();
             _liveLinkConnection.Close();
             Logger.Msg("LiveLink Teardown");
         }
-
-        public bool SupportsEye => true;
-        public bool SupportsLip => true;
 
         // Read the data from the LiveLink UDP stream and place it into a LiveLinkTrackingDataStruct
         private void ReadData(UdpClient liveLinkConnection, IPEndPoint liveLinkRemoteEndpoint, ref LiveLinkTrackingDataStruct trackingData)
