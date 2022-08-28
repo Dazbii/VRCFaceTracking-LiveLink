@@ -60,16 +60,16 @@ namespace VRCFT_Module___LiveLink
                     { LipShape_v2.MouthLowerInside, external.MouthRollLower },
                     { LipShape_v2.MouthLowerOverlay, 0 },
                     { LipShape_v2.TongueLongStep1, external.TongueOut },
-                    { LipShape_v2.TongueLongStep2, external.TongueOut },
-                    { LipShape_v2.TongueDown, 0 }, // -TongueY
-                    { LipShape_v2.TongueUp, 0 }, // +TongueY
-                    { LipShape_v2.TongueRight, 0 }, // +TongueX
                     { LipShape_v2.TongueLeft, 0 }, // -TongueX
+                    { LipShape_v2.TongueRight, 0 }, // +TongueX
+                    { LipShape_v2.TongueUp, 0 }, // +TongueY
+                    { LipShape_v2.TongueDown, 0 }, // -TongueY
                     { LipShape_v2.TongueRoll, 0 },
-                    { LipShape_v2.TongueUpLeftMorph, 0 },
+                    { LipShape_v2.TongueLongStep2, external.TongueOut },
                     { LipShape_v2.TongueUpRightMorph, 0 },
-                    { LipShape_v2.TongueDownLeftMorph, 0 },
+                    { LipShape_v2.TongueUpLeftMorph, 0 },
                     { LipShape_v2.TongueDownRightMorph, 0 },
+                    { LipShape_v2.TongueDownLeftMorph, 0 },
                 };
 
             for (int i = 0; i < SRanipal_Lip_v2.WeightingCount; i++)
