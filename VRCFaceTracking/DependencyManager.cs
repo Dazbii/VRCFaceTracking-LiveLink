@@ -18,7 +18,7 @@ namespace VRCFaceTracking
             "SRanipal.SRanipal.dll"
         };
 
-        public static void Init()
+        public static void Load()
         {
             AppDomain.CurrentDomain.AssemblyResolve += OnResolveAssembly;
             
@@ -73,7 +73,7 @@ namespace VRCFaceTracking
         {
             var extractedPaths = new List<string>();
 
-            var dirName = Path.Combine(Utils.DataDirectory, "StockLibs");
+            var dirName = Path.Combine(Utils.PersistentDataDirectory, "StockLibs");
             if (!Directory.Exists(dirName))
                 Directory.CreateDirectory(dirName);
 
@@ -103,7 +103,7 @@ namespace VRCFaceTracking
                     }
                     catch(Exception e)
                     {
-                        Logger.Error($"Failed to get DLL: " + e.Message);
+                        Logger.Error("Failed to get DLL: " + e.Message);
                     }
                 }
             }

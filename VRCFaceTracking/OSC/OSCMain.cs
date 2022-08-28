@@ -30,28 +30,47 @@ namespace VRCFaceTracking.OSC
     {
         private static readonly Socket SenderClient = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         private static readonly Socket ReceiverClient = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        private static Thread receiveThread;
-        private static CancellationToken rtct;
-        public OscMain(string address, int outPort, int inPort)
-        {
-            SenderClient.Connect(new IPEndPoint(IPAddress.Parse(address), outPort));
-            ReceiverClient.Bind(new IPEndPoint(IPAddress.Parse(address), inPort));
+        private static Thread _receiveThread;
 
-            receiveThread = new Thread(() =>
+        public (bool senderSuccess, bool receiverSuccess) Bind(string address, int outPort, int inPort)
+        {
+            (bool senderSuccess, bool receiverSuccess) = (false, false);
+            try
             {
-                while (!rtct.IsCancellationRequested)
-                    Recv();
-            });
-            receiveThread.Start();
+                SenderClient.Connect(new IPEndPoint(IPAddress.Parse(address), outPort));
+                senderSuccess = true;
+                ReceiverClient.Bind(new IPEndPoint(IPAddress.Parse(address), inPort));
+                receiverSuccess = true;
+                ReceiverClient.ReceiveTimeout = 1000;
+                
+                _receiveThread = new Thread(() =>
+                {
+                    while (!MainStandalone.MasterCancellationTokenSource.IsCancellationRequested)
+                        Recv();
+                });
+                _receiveThread.Start();
+            }
+            catch (Exception)
+            {
+                return (senderSuccess, receiverSuccess);
+            }
+            return (true, true);
         }
 
         private void Recv()
         {
-            byte[] buffer = new byte[2048];
-            ReceiverClient.Receive(buffer, buffer.Length, SocketFlags.None);
-            var newMsg = new OscMessage(buffer);
-            if (newMsg.Address == "/avatar/change")
-                ConfigParser.ParseNewAvatar((string)newMsg.Value);
+            try
+            {
+                byte[] buffer = new byte[2048];
+                ReceiverClient.Receive(buffer, buffer.Length, SocketFlags.None);
+                var newMsg = new OscMessage(buffer);
+                if (newMsg.Address == "/avatar/change")
+                    ConfigParser.ParseNewAvatar((string) newMsg.Value);
+            }
+            catch (SocketException)
+            {
+                // Ignore as this is most likely a timeout exception
+            }
         }
 
         public void Send(byte[] data) => SenderClient.Send(data, data.Length, SocketFlags.None);

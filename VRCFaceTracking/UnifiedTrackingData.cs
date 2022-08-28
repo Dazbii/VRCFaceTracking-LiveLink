@@ -6,7 +6,6 @@ using ViveSR.anipal.Lip;
 using VRCFaceTracking.Params;
 using VRCFaceTracking.Params.Eye;
 using VRCFaceTracking.Params.LipMerging;
-using VRCFaceTracking.Pimax;
 using Vector2 = VRCFaceTracking.Params.Vector2;
 
 namespace VRCFaceTracking
@@ -31,17 +30,9 @@ namespace VRCFaceTracking
             Widen = expression.Value.eye_wide;
             Squeeze = expression.Value.eye_squeeze;
         }
-
-        public void Update(EyeExpressionState eyeState)
-        {
-            Look = new Vector2(eyeState.PupilCenterX-0.5f, eyeState.PupilCenterY-0.5f) * 3;
-            Openness = eyeState.Openness;
-            Widen = 0;
-            Squeeze = 0;
-        }
     }
     
-    public struct EyeTrackingData
+    public class EyeTrackingData
     {
         // Camera Data
         public (int x, int y) ImageSize;
@@ -53,7 +44,9 @@ namespace VRCFaceTracking
         // SRanipal Exclusive
         public float EyesDilation;
         private float _maxDilation, _minDilation;
-
+        
+        // Custom parameter
+        public float EyesPupilDiameter;
 
         public void UpdateData(EyeData_v2 eyeData)
         {
@@ -81,14 +74,10 @@ namespace VRCFaceTracking
             Combined.Squeeze = (Left.Squeeze + Right.Squeeze) / 2;
             
             if (dilation != 0)
-                EyesDilation = dilation / _minDilation / (_maxDilation - _minDilation);
-        }
-
-        public void UpdateData(Ai1EyeData eyeData)
-        {
-            Left.Update(eyeData.Left);
-            Right.Update(eyeData.Right);
-            Combined.Update(eyeData.Recommended);
+            {
+                EyesDilation = (dilation - _minDilation) / (_maxDilation - _minDilation);
+                EyesPupilDiameter = dilation > 10 ? 1 : dilation / 10;
+            }
         }
 
         private void UpdateMinMaxDilation(float readDilation)
@@ -106,19 +95,34 @@ namespace VRCFaceTracking
         }
     }
 
-    public struct UnifiedTrackingData
+    public class LipTrackingData
+    {
+        // Camera Data
+        public (int x, int y) ImageSize;
+        public byte[] ImageData;
+        public bool SupportsImage;
+
+        public float[] LatestShapes = new float[SRanipal_Lip_v2.WeightingCount];
+
+        public void UpdateData(LipData_v2 lipData)
+        {
+            unsafe
+            {
+                for (int i = 0; i < SRanipal_Lip_v2.WeightingCount; i++)
+                    LatestShapes[i] = lipData.prediction_data.blend_shape_weight[i];
+            }
+        }
+    }
+
+    public class UnifiedTrackingData
     {
         public static readonly List<IParameter> AllParameters = EyeTrackingParams.ParameterList.Union(LipShapeMerger.AllLipParameters).ToList();
 
         // Central update action for all parameters to subscribe to
         public static Action<EyeTrackingData /* Lip Data Blend Shape  */
-            , Dictionary<LipShape_v2, float> /* Lip Weightings */> OnUnifiedParamsUpdated;
+            , LipTrackingData /* Lip Weightings */> OnUnifiedDataUpdated;
 
-        // Copy of latest updated unified eye data
-        public static EyeTrackingData LatestEyeData;
-
-        // SRanipal Exclusives
-        public static IntPtr Image;
-        public static Dictionary<LipShape_v2, float> LatestLipShapes = new Dictionary<LipShape_v2, float>();
+        public static EyeTrackingData LatestEyeData = new EyeTrackingData();
+        public static LipTrackingData LatestLipData = new LipTrackingData();
     }
 }
