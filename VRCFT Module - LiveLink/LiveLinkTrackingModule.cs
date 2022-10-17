@@ -165,6 +165,11 @@ namespace VRCFT_Module___LiveLink
                 // TODO: This just blocks and waits to receive, are we sure this is the freshest packet?
                 Byte[] recieveBytes = liveLinkConnection.Receive(ref liveLinkRemoteEndpoint);
 
+                if (recieveBytes.Length < 244)
+                {
+                    return;
+                }
+
                 // There is a bunch of static data at the beginning of the packet, it may be variable length because it includes phone name
                 // So grab the last 244 bytes of the packet sent using some Linq magic, since that's where our blendshapes live
                 IEnumerable<Byte> trimmedBytes = recieveBytes.Skip(Math.Max(0, recieveBytes.Count() - 244));
