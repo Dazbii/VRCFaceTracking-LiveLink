@@ -1,0 +1,207 @@
+﻿<Page
+    x:Class="VRCFaceTracking.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:labs="using:CommunityToolkit.Labs.WinUI"
+    xmlns:helpers1="using:VRCFaceTracking.Helpers"
+    mc:Ignorable="d">
+    <Page.Resources>
+        <helpers1:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
+        <!--  These styles can be referenced to create a consistent SettingsPage layout  -->
+
+        <!--  Spacing between cards  -->
+        <x:Double x:Key="SettingsCardSpacing">3</x:Double>
+
+        <!--  Style (inc. the correct spacing) of a section header  -->
+        <Style
+            x:Key="SettingsSectionHeaderTextBlockStyle"
+            BasedOn="{StaticResource BodyStrongTextBlockStyle}"
+            TargetType="TextBlock">
+            <Style.Setters>
+                <Setter Property="Margin" Value="1,29,0,5" />
+            </Style.Setters>
+        </Style>
+    </Page.Resources>
+    <Grid>
+        <ScrollViewer
+            x:Name="contentSV"
+            Grid.Row="1"
+            Padding="0,0,0,0"
+            IsTabStop="False"
+            UseSystemFocusVisuals="False"
+            VerticalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto">
+            <StackPanel
+                x:Name="ContentArea"
+                Spacing="{StaticResource SettingsCardSpacing}">
+                <StackPanel.ChildrenTransitions>
+                    <EntranceThemeTransition FromVerticalOffset="50" />
+                    <RepositionThemeTransition IsStaggeringEnabled="False" />
+                </StackPanel.ChildrenTransitions>
+                
+                <labs:SettingsCard x:Uid="ThemeSettings">
+                    <labs:SettingsCard.HeaderIcon>
+                        <FontIcon Glyph="&#xE790;" />
+                    </labs:SettingsCard.HeaderIcon>
+                    <ComboBox x:Name="themeMode" SelectionChanged="themeMode_SelectionChanged">
+                        <ComboBoxItem Content="Light" Tag="Light" />
+                        <ComboBoxItem Content="Dark" Tag="Dark" />
+                        <ComboBoxItem Content="Use system setting" Tag="Default" />
+                    </ComboBox>
+                </labs:SettingsCard>
+
+                <labs:SettingsCard x:Uid="OscSettings">
+                    <labs:SettingsCard.HeaderIcon>
+                        <FontIcon Glyph="&#xEC05;" />
+                    </labs:SettingsCard.HeaderIcon>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                            <NumberBox x:Name="RecvPort"
+                                Header="Receive Port"
+                                SpinButtonPlacementMode="Inline"
+                                SmallChange="1"
+                                LargeChange="10"
+                                Margin="15, 0, 15, 0"
+                                Value="{x:Bind OscViewModel.RecvPort, Mode=TwoWay}"/>
+                            
+                            <TextBox x:Name="Address" 
+                                     Header="IP Address" 
+                                     PlaceholderText="127.0.0.1" 
+                                     Text="{x:Bind OscViewModel.Address, Mode=TwoWay}"/>
+                            
+                            <NumberBox x:Name="SendPort"
+                                Header="Send Port"
+                                SpinButtonPlacementMode="Inline"
+                                SmallChange="1"
+                                LargeChange="10" 
+                                Margin="15, 0, 15, 0"
+                                Value="{x:Bind OscViewModel.SendPort, Mode=TwoWay}"/>
+                        </StackPanel>
+                    </Grid>
+                </labs:SettingsCard>
+                
+                <labs:SettingsExpander x:Uid="CalibrationSettings">
+                    <labs:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xEC49;"/>
+                    </labs:SettingsExpander.HeaderIcon>
+                    
+                    <labs:SettingsExpander.Items>
+                        <labs:SettingsCard
+                            Header="Calibration Enabled"
+                            Description="Toggles whether or not calibration is enabled">
+                            <ToggleSwitch IsOn="{x:Bind CalibrationSettings.Enabled, Mode=TwoWay}" />
+                        </labs:SettingsCard>
+                        <labs:SettingsCard
+                            Header="Continuous Calibration"
+                            Description="Slowly calibrates to your facial expressions over time">
+                            <ToggleSwitch IsOn="{x:Bind CalibrationSettings.ContinuousCalibration, Mode=TwoWay}" />
+                        </labs:SettingsCard>
+                        <labs:SettingsCard
+                            Header="Calibrate"
+                            Description="Heighten the influence your expressions make on calibration temporarily">
+                            <Button Style="{StaticResource AccentButtonStyle}" Content="Calibrate" Click="ButtonBase_OnClick" />
+                        </labs:SettingsCard>
+                        <labs:SettingsCard
+                            Header="Calibration Influence"
+                            Description="Controls how much of an influence your facial expressions have on overall calibration over time">
+                            <Slider Width="200" Minimum="0.00" Maximum="1.00" StepFrequency="0.01" SnapsTo="StepValues" Value="{x:Bind CalibrationSettings.CalibrationWeight, Mode=TwoWay}" />
+                        </labs:SettingsCard>
+                    </labs:SettingsExpander.Items>
+                </labs:SettingsExpander>
+                
+                <labs:SettingsExpander x:Uid="RiskySettings">
+                    <labs:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE7BA;" />
+                    </labs:SettingsExpander.HeaderIcon>
+                    <ToggleSwitch x:Name="dangerAcceptToggle" Toggled="AcceptToggle_OnToggled" OnContent="Gremlin Mode" IsOn="{x:Bind RiskySettingsViewModel.Enabled, Mode=OneWay}"/>
+                    <labs:SettingsExpander.Items>
+                        <labs:SettingsCard
+                            x:Name="allParamsRelevant"
+                            Header="Force Relevancy"
+                            IsEnabled="False"
+                            Description="Forces sending of all parameters every frame by forcing relevancy">
+                            <ToggleSwitch x:Name="allParamsRelevantToggle" IsOn="{x:Bind RiskySettingsViewModel.AllParametersRelevant, Mode=TwoWay}" />
+                        </labs:SettingsCard>
+                        <labs:SettingsCard
+                            x:Name="forceReInit"
+                            Header="Force Re-Initialize"
+                            IsEnabled="False"
+                            Description="Force VRCFT to unload and reinitialize all modules">
+                            <Button x:Name="forceReInitButton" Click="forceReInitButton_OnClick" Content="Re-Initialize" />
+                        </labs:SettingsCard>
+                        <labs:SettingsCard
+                            x:Name="resetVRCFT"
+                            Header="Reset VRCFT"
+                            IsEnabled="False"
+                            Description="Reset all data stored by VRCFT in your AppData folder">
+                            <Button x:Name="resetVRCFTButton" Click="resetVRCFTButton_OnClick" Content="Reset" />
+                        </labs:SettingsCard>
+                        <labs:SettingsCard
+                            x:Name="resetAvatarConfig"
+                            Header="Reset VRChat Configs"
+                            IsEnabled="False"
+                            Description="Reset all VRChat OSC config data (will be regenerated when avatar is reloaded)">
+                            <Button x:Name="resetVRCAvatarConf" Click="resetVRCAvatarConf_OnClick" Content="Reset"/>
+                        </labs:SettingsCard>
+                    </labs:SettingsExpander.Items>
+                </labs:SettingsExpander>
+
+
+                <!--  About  -->
+                <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" x:Uid="About" />
+                <labs:SettingsExpander x:Uid="Copyright" Header="VRCFaceTracking">
+                    <labs:SettingsExpander.HeaderIcon>
+                        <BitmapIcon UriSource="/Assets/Square44x44Logo.png" />
+                    </labs:SettingsExpander.HeaderIcon>
+                    <TextBlock
+                            Margin="0,-2,0,0"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            IsTextSelectionEnabled="True"
+                            Text="{x:Bind Version}" />
+                    <labs:SettingsExpander.Items>
+                        <labs:SettingsCard x:Uid="OpenLocalStorageCard" IsClickEnabled="True">
+                            <labs:SettingsCard.ActionIcon>
+                                    <FontIcon FontSize="20" Glyph="&#xEC50;" />
+                            </labs:SettingsCard.ActionIcon>
+                        </labs:SettingsCard>
+                        <labs:SettingsCard x:Uid="CloneRepoCard">
+                            <TextBlock
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    IsTextSelectionEnabled="True"
+                                    Text="git clone https://github.com/benaclejames/VRCFaceTracking" />
+                        </labs:SettingsCard>
+                        <labs:SettingsCard
+                                x:Name="bugRequestCard"
+                                x:Uid="BugRequestCard"
+                                IsClickEnabled="True">
+                            <labs:SettingsCard.ActionIcon>
+                                <FontIcon Glyph="&#xE8A7;" />
+                            </labs:SettingsCard.ActionIcon>
+                        </labs:SettingsCard>
+                        <labs:SettingsCard
+                                HorizontalContentAlignment="Left"
+                                ContentAlignment="Vertical"
+                                x:Uid="Dependencies">
+                            <StackPanel Margin="-12,0,0,0" Orientation="Vertical">
+                                <HyperlinkButton Content="SimpleRustOSC" NavigateUri="https://github.com/benaclejames/SimpleRustOSC" />
+                            </StackPanel>
+                        </labs:SettingsCard>
+                        <labs:SettingsCard
+                                HorizontalContentAlignment="Left"
+                                ContentAlignment="Vertical"
+                                x:Uid="Disclaimer">
+                        </labs:SettingsCard>
+                    </labs:SettingsExpander.Items>
+                </labs:SettingsExpander>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>
